@@ -2,69 +2,6 @@
 
 ## This is RocketSeat:rocket:<a href="https://github.com/Rocketseat/bootcamp-gostack-desafio-02/blob/master/README.md#desafio-02-iniciando-aplica%C3%A7%C3%A3o"> Challenge 02</a>
 
-### Setting up the development environment
-
-This is a documentation about the enviroment setup to develop a nodejs backend with Sequelize. It was made by myself and to my future self because that's a lot to remember.
-
-Enjoy :)
-
----
-
-Init yarn:
-
-```bash
-yarn init -y
-```
-
-Install express
-
-```bash
-yarn add express
-```
-
-Create the following structure
-
-```bash
-src
-├── app.js
-├── routes.js
-└── server.js
-```
-
-Structure the files using a class named App and then isolate the app from the routes and the server.
-
-* app.js: contains the configs of the server.
-
-* server.js: used to iniate app. (server.listen).
-
-* routes.js: contain the routes(obviously).
-
-Install sucrase and nodemon as development depencies
-
-```bash
-yarn add sucrase nodemon -D
-```
-
-At "package.json", include "scripts"
-
-```json
-"scripts": {
-    "dev": "nodemon src/server.js"
-  },
-```
-
-And create a file named "nodemon.js" with the following json
-
-```json
-{
-    "execMap": {
-        "js": "sucrase-node"
-    }
-}
-```
-
----
-
 ### Setting up a docker container for the Postgres Service
 
 With docker installed, run:
@@ -87,8 +24,244 @@ Now you have a Postgres database.
 
 ---
 
-### Setting up Eslint, prettier & Editor config
+### Configuring Sequelize
 
+Install Sequelize
 
-_To be continued..._
+```bash
+yarn add sequelize
+```
 
+```bash
+yarn add sequelize-cli -D
+```
+
+Create a .sequelizerc file
+
+Espeficy the paths to your database elements
+
+```javascript
+const { resolve } = require('path');
+
+module.exports = {
+  config: resolve(__dirname, 'src', 'config', 'database.js'),
+  'models-path': resolve(__dirname, 'src', 'app', 'models'),
+  'migrations-path': resolve(__dirname, 'src', 'database', 'migrations'),
+  'seeders-path': resolve(__dirname, 'src', 'database', 'seeds'),
+};
+```
+Inside database.js
+
+```javascript
+module.exports = {
+  dialect: 'postgres',
+  host: 'localhost',
+  username: 'postgres',
+  password: '<password>',
+  database: '<database_name>',
+  define: {
+    timestamps: true,
+    underscored: true,
+    underscoredAll: true,
+  },
+};
+```
+
+Then, for postgres, run
+
+```bash
+yarn add pg pg-hstore
+```
+------
+
+Creating a migration for users
+
+```bash
+yarn sequelize migration:create --name=create-users
+```
+
+Users table:
+
+```javascript
+module.exports = {
+  up: (queryInterface, Sequelize) => {
+    return queryInterface.createTable('users', {
+      id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      name: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      email: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        unique: true,
+      },
+      password_hash: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      organizer: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+      },
+      created_at: {
+        type: Sequelize.DATE,
+        allowNull: false,
+      },
+      updated_at: {
+        type: Sequelize.DATE,
+        allowNull: false,
+      },
+    });
+  },
+
+  down: queryInterface => {
+    return queryInterface.dropTable('users');
+  },
+};
+
+```
+
+To execute a migration
+
+```bash
+yarn sequelize db:migrate
+```
+To undo a migration
+
+```bash
+yarn sequelize db:migrate:undo
+```
+
+To undo all migrations
+
+```bash
+yarn sequelize db:migrate:undo:all
+```
+
+------
+
+A Model creation example
+
+```javascript
+import Sequelize, { Model } from 'sequelize';
+
+class User extends Model {
+  static init(sequelize) {
+    super.init(
+      {
+        name: Sequelize.STRING,
+        email: Sequelize.STRING,
+        password_hash: Sequelize.STRING,
+        organizer: Sequelize.BOOLEAN,
+      },
+      {
+        sequelize,
+      }
+    );
+  }
+}
+
+export default User;
+```
+
+A connection example
+
+```javascript
+import Sequelize from 'sequelize';
+
+import User from '../app/models/User';
+
+import databaseConfig from '../config/database';
+
+const models = [User];
+
+class Database {
+  constructor() {
+    this.init();
+  }
+
+  init() {
+    this.connection = new Sequelize(databaseConfig);
+
+    models.map(model => model.init(this.connection));
+  }
+}
+
+export default new Database();
+```
+
+A controller example
+
+```javascript
+import User from '../models/User';
+
+class UserController {
+  async store(req, res) {
+    const user = await User.create(req.body);
+
+    return res.json(user);
+  }
+}
+
+export default new UserController();
+```
+
+------
+
+### Encrypting password
+
+Install bcrypt
+
+```bash
+yarn add bcryptjs
+```
+
+Import bcrypt inside the model
+
+```javascript
+import bcrypt from 'bcryptjs';
+```
+
+Create a Sequelize Hook that encryts the password before saving the user in the database
+
+```javascript
+  this.addHook('beforeSave', async user => {
+    if (user.password) {
+      user.password_hash = await bcrypt.hash(user.password, 8);
+    }
+  });
+```
+
+------
+
+### Using JWT
+
+Install jsonwebtoken
+
+```bash
+yarn add jsonwebtoken
+```
+
+When the user loggs in, create a session and pass the jwt token
+
+```javascript
+ return res.json({
+      user: {
+        id,
+        name,
+        email,
+      },
+      token: jwt.sign({ id }, authConfig.secret, {
+        expiresIn: authConfig.expiresIn,
+      }),
+    });
+```
+
+_To be continued.._
