@@ -87,7 +87,7 @@ Now you have a Postgres database.
 
 ---
 
-### up Eslint, prettier & Editor config
+### Setting up Eslint, prettier & Editor config
 
 
 _To be continued..._
