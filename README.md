@@ -263,5 +263,85 @@ When the user loggs in, create a session and pass the jwt token
       }),
     });
 ```
+That's going to create you a token for that session, what you should do is to save it somehow to use it later when the user tries to make some action, like a update.
+
+The next step is to create e middleware that's going to be executed when a user tries do update some infos. It will look something like that:
+
+```javascript
+import jwt from 'jsonwebtoken';
+import { promisify } from 'util';
+
+import authConfig from '../../config/auth';
+
+export default async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Token no provided.' });
+  }
+
+  const [, token] = authHeader.split(' ');
+
+  try {
+    const decoded = await promisify(jwt.verify)(token, authConfig.secret);
+
+    req.userId = decoded.id;
+
+    return next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid Token' });
+  }
+};
+```
+
+### Data validatin with Yup
+
+Install Yup
+
+```bash
+yarn add yup
+```
+
+import it all using
+
+```javascript
+import * as Yup from 'yup';
+```
+
+An example of field data validation with Yup
+
+```javascript
+const schema = Yup.object().shape({
+      name: Yup.string().required(),
+      email: Yup.string().required(),
+      password: Yup.string().required(),
+    });
+
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validation fails.' });
+    }
+```
+
+And with conditionals
+
+```javascript
+const schema = Yup.object().shape({
+      name: Yup.string(),
+      email: Yup.string(),
+      oldPassword: Yup.string().min(6),
+      password: Yup.string()
+        .min(6)
+        .when('oldPassword', (oldPassword, field) =>
+          oldPassword ? field.required() : field
+        ),
+      confirmPassword: Yup.string().when('password', (password, field) =>
+        password ? field.required().oneOf([Yup.ref('password')]) : field
+      ),
+    });
+
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validation fails.' });
+    }
+```
 
 _To be continued.._
