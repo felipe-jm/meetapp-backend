@@ -1,6 +1,8 @@
 # Meetapp - backend
 
-## This is RocketSeat:rocket:<a href="https://github.com/Rocketseat/bootcamp-gostack-desafio-02/blob/master/README.md#desafio-02-iniciando-aplica%C3%A7%C3%A3o"> Challenge 02</a>
+## This is RocketSeat:rocket:<a href="https://github.com/Rocketseat/bootcamp-gostack-desafio-02/blob/master/README.md#desafio-02-iniciando-aplica%C3%A7%C3%A3o"> Challenge 02</a> and <a href="https://github.com/Rocketseat/bootcamp-gostack-desafio-03/blob/master/README.md#desafio-03-continuando-aplica%C3%A7%C3%A3o">Challenge 03</a>
+
+_This is an extense readme cause I made it attempting a better understanding of the concepts used in this project._
 
 ### Setting up a docker container for the Postgres Service
 
@@ -342,6 +344,92 @@ const schema = Yup.object().shape({
     if (!(await schema.isValid(req.body))) {
       return res.status(400).json({ error: 'Validation fails.' });
     }
+```
+
+### Using Multer to handle images
+
+Install multer
+
+```bash
+yarn add multer
+```
+Create a config for multer like the following
+
+```javascript
+import multer from 'multer';
+import crypto from 'crypto';
+import { extname, resolve } from 'path';
+
+export default {
+  storage: multer.diskStorage({
+    destination: resolve(__dirname, '..', '..', 'tmp', 'uploads'),
+    filename: (req, file, cb) => {
+      crypto.randomBytes(16, (err, res) => {
+        if (err) return cb(err);
+
+        return cb(null, res.toString('hex') + extname(file.originalname));
+      });
+    },
+  }),
+};
+```
+_This configures multer and gives a random name to the image to certify it's going to be unique._
+
+Then use multer as a middleware to your route that is gonna handle the upload
+
+```javascript
+import multer from 'multer';
+import multerConfig from './config/multer';
+
+const upload = multer(multerConfig);
+
+routes.post('/files', upload.single('file'), FileController.store);
+```
+
+That's gonna store the file sent via multipart form in the the path stablished in the multer config.
+
+### Stablishing connections between tables with Sequelize
+
+A migration that adds a column to a table and stablishes a relation with another table(in this case, this column is the avatar_id and is the foreignkey of avatars)
+
+```javascript
+module.exports = {
+  up: (queryInterface, Sequelize) => {
+    return queryInterface.addColumn('users', 'avatar_id', {
+      type: Sequelize.INTEGER,
+      reference: {
+        model: 'avatars',
+        key: 'id',
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
+        allowNull: true,
+      },
+    });
+  },
+
+  down: queryInterface => {
+    return queryInterface.removeColumn('users', 'avatar_id');
+  },
+};
+```
+_It's necessary to stablish this connection inside the model that receives the foreignkey_
+
+```javascript
+static associate(models) {
+  this.belongsTo(models.Avatar, { foreignKey: 'avatar_id' });
+}
+```
+
+Executing method above inside the database.js index, which iniates the models connection.
+
+```javascript
+init() {
+    this.connection = new Sequelize(databaseConfig);
+
+    models
+      .map(model => model.init(this.connection))
+      .map(model => model.associate && model.associate(this.connection.models));
+}
 ```
 
 _To be continued.._
