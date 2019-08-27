@@ -7,6 +7,7 @@ import SessionController from './app/controllers/SessionController';
 import AvatarController from './app/controllers/AvatarController';
 import BannerController from './app/controllers/BannerController';
 import MeetupController from './app/controllers/MeetupController';
+import SubscriptionController from './app/controllers/SubscriptionController';
 
 import authMiddleware from './app/middlewares/auth';
 
@@ -24,6 +25,8 @@ routes.get('/meetups', MeetupController.index);
 routes.post('/meetups', MeetupController.store);
 routes.put('/meetups/:id', MeetupController.update);
 routes.delete('/meetups/:id', MeetupController.delete);
+
+routes.post('/subscriptions/:meetup_id', SubscriptionController.store);
 
 // Uploads
 routes.post('/avatars', upload.single('avatar'), AvatarController.store);

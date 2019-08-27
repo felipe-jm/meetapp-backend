@@ -1,4 +1,5 @@
 import * as Yup from 'yup';
+import { parseISO, isBefore } from 'date-fns';
 import Meetup from '../models/Meetup';
 import User from '../models/User';
 import Avatar from '../models/Avatar';
@@ -52,6 +53,25 @@ class MeetupController {
 
     const { name, description, date, location } = req.body;
 
+    const checkTwoMeetupsSameDay = await Meetup.findAll({
+      where: { organizer_id: req.userId, date },
+    });
+
+    if (checkTwoMeetupsSameDay.length > 0) {
+      return res.status(401).json({
+        error: "Organizers can't create more than one meetup to the same day.",
+      });
+    }
+
+    const parsedDate = parseISO(date);
+
+    if (isBefore(parsedDate, new Date())) {
+      return res.status(401).json({
+        error:
+          'Not possible to create meetups in past dates, or can you go back in time?',
+      });
+    }
+
     const meetup = await Meetup.create({
       name,
       description,
@@ -78,10 +98,20 @@ class MeetupController {
 
     const meetup = await Meetup.findByPk(req.params.id);
 
+    if (!meetup) {
+      return res.status(404).json({ error: 'Meetup not found.' });
+    }
+
     if (meetup.organizer_id !== req.userId) {
       return res
         .status(401)
         .json({ error: 'Only organizers can edit their events.' });
+    }
+
+    if (isBefore(meetup.date, new Date())) {
+      return res.status(401).json({
+        error: 'Meetup already happened.',
+      });
     }
 
     const {
@@ -104,20 +134,11 @@ class MeetupController {
   }
 
   async delete(req, res) {
-    const meetup = await Meetup.findByPk(req.params.id, {
-      include: [
-        {
-          model: User,
-          as: 'organizer',
-          attributes: ['id', 'name'],
-        },
-        {
-          model: Banner,
-          as: 'banner',
-          attributes: ['id', 'path', 'url'],
-        },
-      ],
-    });
+    const meetup = await Meetup.findByPk(req.params.id);
+
+    if (!meetup) {
+      return res.status(404).json({ error: 'Meetup not found.' });
+    }
 
     if (meetup.organizer_id !== req.userId) {
       return res
@@ -125,9 +146,13 @@ class MeetupController {
         .json({ error: "You don't have permission to cancel this meetup." });
     }
 
-    meetup.canceled_at = new Date();
+    if (isBefore(meetup.date, new Date())) {
+      return res.status(401).json({
+        error: 'Meetup already happened.',
+      });
+    }
 
-    await meetup.save(meetup);
+    await meetup.destroy();
 
     return res.json('Meetup was cancelled. :c');
   }
