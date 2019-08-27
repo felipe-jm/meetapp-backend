@@ -36,6 +36,10 @@ class MeetupController {
       ],
     });
 
+    if (meetups.length === 0) {
+      return res.json({ message: 'This user has no meetups organized.' });
+    }
+
     return res.json(meetups);
   }
 
