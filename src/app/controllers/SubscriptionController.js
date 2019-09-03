@@ -6,6 +6,23 @@ import User from '../models/User';
 import Mail from '../../lib/Mail';
 
 class SubscriptionController {
+  async index(req, res) {
+    const subscriptions = await Subscription.findAll({
+      where: {
+        user_id: req.userId,
+      },
+      include: [
+        {
+          model: Meetup,
+          as: 'meetup',
+          order: ['date'],
+        },
+      ],
+    });
+
+    return res.json(subscriptions);
+  }
+
   async store(req, res) {
     const { meetup_id } = req.params;
 
@@ -18,6 +35,10 @@ class SubscriptionController {
         },
       ],
     });
+
+    if (!meetup) {
+      return res.json({ error: 'No meetup registered with this id.' });
+    }
 
     if (meetup.organizer_id === req.userId) {
       return res
@@ -64,10 +85,17 @@ class SubscriptionController {
       user_id: req.userId,
     });
 
+    const user = await User.findByPk(req.userId);
+
     await Mail.sendMail({
       to: `${meetup.organizer.name} <${meetup.organizer.email}>`,
       subject: `Novo usuário inscrito no Meetup ${meetup.name}`,
-      text: 'Usuário inscrito',
+      template: 'subscription',
+      context: {
+        organizer: meetup.organizer.name,
+        name: user.name,
+        email: user.email,
+      },
     });
 
     return res.json(subscription);

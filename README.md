@@ -432,4 +432,66 @@ init() {
 }
 ```
 
+### Using Nodemailer to send emails
+
+Install Nodemailer
+
+```bash
+yarn add nodemailer
+```
+Create the config file
+
+```javascript
+export default {
+  host: 'smtp.mailtrap.io',
+  port: 2525,
+  secure: false,
+  auth: {
+    user: 'b3af98033ed95b',
+    pass: 'c17ac0d90a4a99',
+  },
+  defaul: {
+    from: 'Meetapp Team <noreply>@meetapp.com',
+  },
+};
+```
+Create a Mail class that sets up Nodemailer service
+
+```javascript
+import nodemailer from 'nodemailer';
+import mailConfig from '../config/mail';
+
+class Mail {
+  constructor() {
+    const { host, port, secure, auth } = mailConfig;
+
+    this.transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: auth.user ? auth : null,
+    });
+  }
+
+  sendMail(message) {
+    return this.transporter.sendMail({
+      ...mailConfig.default,
+      ...message,
+    });
+  }
+}
+
+export default new Mail();
+```
+
+Then use sendmail wherever you want
+
+```javascript
+await Mail.sendMail({
+  to: `${meetup.organizer.name} <${meetup.organizer.email}>`,
+  subject: `Novo usuário inscrito no Meetup ${meetup.name}`,
+    text: 'Usuário inscrito',
+});
+```
+
 _To be continued.._
