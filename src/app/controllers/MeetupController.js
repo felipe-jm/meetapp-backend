@@ -200,7 +200,7 @@ class MeetupController {
 
     await meetup.destroy();
 
-    return res.json('Meetup was cancelled. :c');
+    return res.json({ message: 'Meetup was cancelled. :c' });
   }
 }
 

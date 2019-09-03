@@ -494,4 +494,80 @@ await Mail.sendMail({
 });
 ```
 
+### Using MongoDB to store notifications
+
+Start a Mongo container
+
+```bash
+sudo docker run --name <container_name> -p 27017:27017 -d -t mongo
+```
+
+Make the connection
+
+```javascript
+import mongoose from 'mongoose';
+
+class Database {
+  constructor() {
+    this.init();
+    this.mongo();
+  }
+
+  init() {
+    this.connection = new Sequelize(databaseConfig);
+
+    models
+      .map(model => model.init(this.connection))
+      .map(model => model.associate && model.associate(this.connection.models));
+  }
+
+  mongo() {
+    this.mongoConnection = mongoose.connect(
+      'mongodb://localhost:27017/meetapp',
+      { useNewUrlParser: true, useFindAndModify: true }
+    );
+  }
+```
+
+Creating a Schema
+
+```javascript
+import mongoose from 'mongoose';
+
+const NotificationSchema = new mongoose.Schema(
+  {
+    content: {
+      type: String,
+      required: true,
+    },
+    user: {
+      type: Number,
+      required: true,
+    },
+    read: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+export default mongoose.model('Notification', NotificationSchema);
+```
+
+Then send register the notification
+
+```javascript
+/**
+* Notify organizer that somone has subscribed to meeetup
+*/
+await Notification.create({
+  content: `${user.name} has subscribed to your meetup ${meetup.name}!`,
+    user: meetup.organizer_id,
+});
+```
+
 _To be continued.._

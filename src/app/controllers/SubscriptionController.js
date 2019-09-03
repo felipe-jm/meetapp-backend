@@ -2,8 +2,10 @@ import { isBefore } from 'date-fns';
 import Subscription from '../models/Subscription';
 import Meetup from '../models/Meetup';
 import User from '../models/User';
+import Notification from '../schemas/Notification';
 
-import Mail from '../../lib/Mail';
+import SubscriptionMail from '../jobs/SubscriptionMail';
+import Queue from '../../lib/Queue';
 
 class SubscriptionController {
   async index(req, res) {
@@ -64,7 +66,7 @@ class SubscriptionController {
       ],
     });
 
-    if (meetups.length > 0) {
+    if (meetups.length) {
       return res
         .status(401)
         .json({ error: 'You already have a meetup scheduled for this hour.' });
@@ -74,7 +76,7 @@ class SubscriptionController {
       where: { meetup_id, user_id: req.userId },
     });
 
-    if (alreadySubscribed.length > 0) {
+    if (alreadySubscribed.length) {
       return res.status(401).json({
         error: "You can't subscribe to the same meetup more then once.",
       });
@@ -87,18 +89,39 @@ class SubscriptionController {
 
     const user = await User.findByPk(req.userId);
 
-    await Mail.sendMail({
-      to: `${meetup.organizer.name} <${meetup.organizer.email}>`,
-      subject: `Novo usuário inscrito no Meetup ${meetup.name}`,
-      template: 'subscription',
-      context: {
-        organizer: meetup.organizer.name,
-        name: user.name,
-        email: user.email,
-      },
+    /**
+     * Notify organizer that somone has subscribed to meeetup
+     */
+    await Notification.create({
+      content: `${user.name} has subscribed to your meetup ${meetup.name}!`,
+      user: meetup.organizer_id,
     });
 
+    /**
+     * Notify organizer via email
+     */
+    Queue.add(SubscriptionMail.key, { meetup, user });
+
     return res.json(subscription);
+  }
+
+  // Unsubscribe
+  async delete(req, res) {
+    const { meetup_id } = req.params;
+
+    const subscription = await Subscription.findOne({
+      where: { user_id: req.userId, meetup_id },
+    });
+
+    if (!subscription) {
+      return res
+        .status(401)
+        .json({ error: 'You are not subscribed to this meetup.' });
+    }
+
+    await subscription.destroy();
+
+    return res.json({ message: 'You unsubscribed this meetup.' });
   }
 }
 

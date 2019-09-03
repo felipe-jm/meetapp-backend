@@ -28,6 +28,7 @@ routes.delete('/meetups/:id', MeetupController.delete);
 
 routes.get('/subscriptions', SubscriptionController.index);
 routes.post('/subscriptions/:meetup_id', SubscriptionController.store);
+routes.delete('/subscriptions/:meetup_id', SubscriptionController.delete);
 
 // Uploads
 routes.post('/avatars', upload.single('avatar'), AvatarController.store);
