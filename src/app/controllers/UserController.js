@@ -1,5 +1,6 @@
 import * as Yup from 'yup';
 import User from '../models/User';
+import Avatar from '../models/Avatar';
 
 class UserController {
   async store(req, res) {
@@ -74,13 +75,23 @@ class UserController {
         .json({ error: 'That is not your current password.' });
     }
 
-    const { id, name, organizer } = await user.update(req.body);
+    await user.update(req.body);
+
+    const { id, name, avatar } = User.findByPk(req.userId, {
+      include: [
+        {
+          model: Avatar,
+          as: 'avatar',
+          attributes: ['id', 'path', 'url'],
+        },
+      ],
+    });
 
     return res.json({
       id,
       name,
       email,
-      organizer,
+      avatar,
     });
   }
 }
