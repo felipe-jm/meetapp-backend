@@ -77,7 +77,7 @@ class UserController {
 
     await user.update(req.body);
 
-    const { id, name, avatar } = User.findOne({
+    const { id, name, avatar } = await User.findOne({
       where: { email },
       include: [
         {
