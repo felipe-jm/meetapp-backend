@@ -7,14 +7,31 @@ import Banner from '../models/Banner';
 
 class MeetupController {
   async index(req, res) {
-    const { page = 1 } = req.query;
+    const { page = 1, meetup_id } = req.query;
+
+    if (meetup_id) {
+      const meetup = await Meetup.findOne({
+        where: {
+          id: meetup_id,
+        },
+        include: [
+          {
+            model: Banner,
+            as: 'banner',
+            attributes: ['id', 'path', 'url'],
+          },
+        ],
+      });
+
+      return res.json(meetup);
+    }
 
     const meetups = await Meetup.findAll({
       where: { organizer_id: req.userId },
       order: ['date'],
       limit: 20,
       offset: (page - 1) * 20,
-      attributes: ['id', 'name', 'description', 'date', 'location'],
+      attributes: ['id', 'name', 'description', 'date', 'location', 'past'],
       include: [
         {
           model: User,
@@ -49,13 +66,14 @@ class MeetupController {
       description: Yup.string().required(),
       date: Yup.date().required(),
       location: Yup.string().required(),
+      banner_id: Yup.number(),
     });
 
     if (!(await schema.isValid(req.body))) {
       return res.status(401).json({ error: 'validation fails.' });
     }
 
-    const { name, description, date, location } = req.body;
+    const { name, description, date, location, banner_id } = req.body;
 
     const checkTwoMeetupsSameDay = await Meetup.findAll({
       where: { organizer_id: req.userId, date },
@@ -81,6 +99,7 @@ class MeetupController {
       description,
       date,
       location,
+      banner_id,
       organizer_id: req.userId,
     });
 
@@ -150,11 +169,11 @@ class MeetupController {
         .json({ error: "You don't have permission to cancel this meetup." });
     }
 
-    if (isBefore(meetup.date, new Date())) {
-      return res.status(401).json({
-        error: 'Meetup already happened.',
-      });
-    }
+    // if (isBefore(meetup.date, new Date())) {
+    //   return res.status(401).json({
+    //     error: 'Meetup already happened.',
+    //   });
+    // }
 
     await meetup.destroy();
 
