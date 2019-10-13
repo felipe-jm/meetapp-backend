@@ -9,6 +9,7 @@ import BannerController from './app/controllers/BannerController';
 import MeetupController from './app/controllers/MeetupController';
 import SubscriptionController from './app/controllers/SubscriptionController';
 import ScheduleController from './app/controllers/ScheduleController';
+import NotificationController from './app/controllers/NotificationController';
 
 import authMiddleware from './app/middlewares/auth';
 
@@ -32,6 +33,9 @@ routes.post('/subscriptions/:meetup_id', SubscriptionController.store);
 routes.delete('/subscriptions/:meetup_id', SubscriptionController.delete);
 
 routes.get('/schedules', ScheduleController.index);
+
+routes.get('/notifications', NotificationController.index);
+routes.put('/notifications/:id', NotificationController.update);
 
 // Uploads
 routes.post('/avatars', upload.single('avatar'), AvatarController.store);
