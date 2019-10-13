@@ -2,6 +2,7 @@ import { isBefore } from 'date-fns';
 import Subscription from '../models/Subscription';
 import Meetup from '../models/Meetup';
 import User from '../models/User';
+import Banner from '../models/Banner';
 import Notification from '../schemas/Notification';
 
 import SubscriptionMail from '../jobs/SubscriptionMail';
@@ -18,6 +19,17 @@ class SubscriptionController {
           model: Meetup,
           as: 'meetup',
           order: ['date'],
+          include: [
+            {
+              model: Banner,
+              as: 'banner',
+              attributes: ['id', 'path', 'url'],
+            },
+            {
+              model: User,
+              as: 'organizer',
+            },
+          ],
         },
       ],
     });

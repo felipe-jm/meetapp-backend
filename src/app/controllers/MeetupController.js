@@ -138,6 +138,7 @@ class MeetupController {
     }
 
     const {
+      past,
       name,
       description,
       date,
@@ -147,6 +148,7 @@ class MeetupController {
     } = await meetup.update(req.body);
 
     return res.json({
+      past,
       name,
       description,
       date,
