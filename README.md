@@ -18,7 +18,7 @@ Bootcamp GoStack Meetapp
 yarn install
 
 # Set up the docker container for the postgres service
-docker run --name postgers -e POSTGRES_PASSWORD=<database_password> -p 5432:5432 -d postgres
+docker run --name postgres -e POSTGRES_PASSWORD=<database_password> -p 5432:5432 -d postgres
 
 # Set up the docker container for the mongodb service
 sudo docker run --name mongo -p 27017:27017 -d -t mongo
