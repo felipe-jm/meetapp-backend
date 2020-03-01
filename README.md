@@ -1,5 +1,5 @@
 <h1 align="center">
-<img alt="Meetapp" src="./imgs/meetapp.svg" style="font-size: 32px;" />
+<img alt="Meetapp" src="./imgs/meetapp.svg" style="font-size: 64px;" />
 <br>
 Bootcamp GoStack Meetapp
 </h1>
@@ -8,7 +8,7 @@ Bootcamp GoStack Meetapp
   Share your ideas. Create a meetup! :octocat: :rocket:
 </h4>
 
-## Backend
+# Backend
 
 ## :computer: Run it!
 
@@ -18,7 +18,7 @@ Bootcamp GoStack Meetapp
 yarn install
 
 # Set up the docker container for the postgres service
-docker run --name postgers -e POSTGRES_PASSWORD=<database_password> -p 5432:5432 -d postgres
+docker run --name postgres -e POSTGRES_PASSWORD=<database_password> -p 5432:5432 -d postgres
 
 # Set up the docker container for the mongodb service
 sudo docker run --name mongo -p 27017:27017 -d -t mongo
