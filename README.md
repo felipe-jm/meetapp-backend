@@ -39,9 +39,9 @@ yarn queue
 
 ## Check the rest of the project! :pray:
 
-### <a href="https://github.com/Felibread/meetapp-frontend">Frontend</a>
+### <a href="https://github.com/felipe-jm/meetapp-frontend">Frontend</a>
 
-### <a href="https://github.com/Felibread/meetapp-mobile">Mobile</a>
+### <a href="https://github.com/felipe-jm/meetapp-mobile">Mobile</a>
 
 ---
 
